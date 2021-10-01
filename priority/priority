@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Autor: Gabriel Leite Bessa <gabrielleitebessa@gmail.com>
+# Data: 30/09/2021
+# Github: https://github.com/glbessa
+#
+# Descrição: Projeto para modificar a prioridade de recursos para algum processo especifico ou grupo de processos com determinado nome
+# 
+# Atenção: para conseguir rodar o script precisa-se de permissão root
+
+# algumas variáveis
+processo=$1
+nivel=$2
+padrao="-10"
+
+function main() 
+{
+    # PS: usado para listar detalhes dos processos rodando no computador
+    #   h -> utilizado para não exibir o cabeçalho padrão
+    #   -o -> formata a saída do programa segundo especificações do usuário, o "pgrp" por exemplo  serve para mostrar o group id de processos
+    #   -C -> filtra a saída do programa pelo nome do processo especificado
+    #
+    # UNIQ: usado para remover palavra duplicadas
+    pgrp="`ps h -o pgrp -C "$processo" | uniq`"
+
+    # renice: usado para modificar a prioridade de um processo em execução
+    #   -n serve para especificar a prioridade, em sistemas unix ela é medida de -20 (mais prioritário) até 20 (menos prioritário)
+    #   -g serve para especificar qual é o GID (GROUP ID) do processo alvo
+    #   -p serve para especificar qual é o PID (PROCESS ID) do processo alvo
+    #   -u serve para especificar qual é o usuário para o qual renice vai modificar todos os processos
+    #   exemplo: renice -n -15 -p 1255
+    if [ $pgrp ] ; then
+        renice -n $nivel -g "$pgrp"
+    else
+        echo "Processo não encontrado!"
+    fi
+}
+
+function phelp() 
+{
+    echo -e "Uso:\n    priority [NOME DO PROCESSO] [NIVEL]\n        Nome do processo: programa o qual se deseja alterar a prioridade.\n        Nível (PADRÃO: -10): varia de -20 até 20, onde -20 é com maior privilégio e 20 com menor.\n\nAtenção: rodar o script com permissão de superusuário!"
+}
+
+if [ -z $processo ]
+then    
+    phelp
+else
+    if [ -z $nivel ]
+    then
+        nivel=$padrao
+        main
+    else
+        main
+    fi
+fi
